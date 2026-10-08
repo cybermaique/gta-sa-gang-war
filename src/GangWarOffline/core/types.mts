@@ -5,6 +5,7 @@ export interface Gang {
   id: GangId;
   name: string;
   color: `#${string}`;
+  tag?: string;
   leaderId?: string;
   members: number;
   bankBalance: number;

@@ -9,3 +9,16 @@ export const RANKING_SHORTCUT: KeyboardShortcut = Object.freeze({
   keys: Object.freeze([0x11, 0x47]),
   label: "Ctrl + G",
 });
+
+export const DEV_SHORTCUTS = Object.freeze({
+  page: { keys: [17, 77], label: "Ctrl + M" },
+  pagePrev: { keys: [17, 37], label: "Ctrl + Esquerda" },
+  pageNext: { keys: [17, 39], label: "Ctrl + Direita" },
+  action: { keys: [17, 78], label: "Ctrl + N" },
+  target: { keys: [17, 66], label: "Ctrl + B" },
+  slot: { keys: [17, 76], label: "Ctrl + L" },
+  increase: { keys: [17, 38], label: "Ctrl + Cima" },
+  decrease: { keys: [17, 40], label: "Ctrl + Baixo" },
+  execute: { keys: [17, 13], label: "Ctrl + Enter" },
+  stop: { keys: [17, 27], label: "Ctrl + Esc" },
+});

@@ -1,5 +1,5 @@
 import { INITIAL_GANGS } from "../config/gangs.mts";
-import { isValidIsoUtcTimestamp } from "../core/dates.mts";
+import { isValidIsoUtcTimestamp, isoUtcToEpoch } from "../core/dates.mts";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -17,6 +17,7 @@ export function logDateCompatibility(writeLog: (message: string) => void): void 
     canonicalFormat: typeof value === "string" && value.length === 24 &&
       /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$/.test(value),
     calendarValid: isValidIsoUtcTimestamp(value),
+    expectedEpoch: isoUtcToEpoch(value),
   };
   const calendarChecks = [
     [value, true],
@@ -36,6 +37,10 @@ export function logDateCompatibility(writeLog: (message: string) => void): void 
     report.dateParse = String(timestamp); // Preserva NaN/Infinity; JSON os converteria em null.
     report.dateParseType = typeof timestamp;
     report.dateParseFinite = parseValid = Number.isFinite(timestamp);
+    report.dateParseDeltaMs = Number.isFinite(timestamp) ? timestamp - isoUtcToEpoch(value) : "not-finite";
+    report.dateParseMatchesExactEpoch = timestamp === isoUtcToEpoch(value);
+    report.expectedEpochAsFloat32 = Math.fround(isoUtcToEpoch(value));
+    report.matchesFloat32Rounding = timestamp !== isoUtcToEpoch(value) && timestamp === Math.fround(isoUtcToEpoch(value));
   } catch (error) {
     report.dateParseError = errorMessage(error);
   }

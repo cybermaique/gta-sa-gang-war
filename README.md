@@ -1,273 +1,167 @@
 # San Andreas: Gang War Offline
 
-Mod single-player para GTA San Andreas, inspirado nos servidores SA-MP Gang War.
+Persistencia v0.2: [diagnostico INI, datas e instrucoes de aceite no GTA](docs/PERSISTENCE_DIAGNOSTIC.md).
+O IniFiles 1.2 ainda falha na releitura do snapshot real nesta instalacao. Por isso,
+o modo atual e `memory`: recursos v0.2 inicializam para teste integrado, sem tocar
+em snapshots e sem preservar alteracoes entre reinicios.
 
-O objetivo é evoluir para um mundo persistente com aproximadamente 20 gangues controladas por IA.
+Complemento Fase 10.1: chat global/gangue, tags persistentes, identidades, score
+individual e scoreboard TAB. [Configuracao e validacao manual](docs/SOCIAL_SYSTEM.md).
+Na instalacao DEV com ImGuiReduxWin32, TAB e chat usam a interface ImGui.
+T abre a barra de chat no alto da tela; `!mensagem` envia para a gangue.
+Enter envia e Esc fecha, sem mouse. Ctrl+Y permanece como atalho legado.
+Nametags 3D/autoria precisa de abates sao capacidades opcionais pendentes; CLEO+
+nao e instalado nem exigido.
 
-## Status: Fase 1 — Gang System v0.1
+Mod single-player de GTA San Andreas classico, inspirado em SA-MP Gang War.
+A v0.2 conecta gangues/ranking, territorios, disputas, GZs, economia, bases, equipamentos,
+respawn e veiculos. **O modo de teste atual e em memoria; persistencia INI permanece pendente.**
 
-Implementado:
+## Ambiente e desenvolvimento
 
-- Cadastro demonstrativo de Grove Street Families, Ballas, Los Santos Vagos e Varrios Los Aztecas.
-- Grove Street como gangue do jogador.
-- Modelo tipado com ID estável, nome, cor, líder opcional, membros, banco, territórios, GZs,
-  bases, vitórias, derrotas, agressividade, habilidade, indicador do jogador e data de registro.
-- Pontuação configurável, ranking recalculável e desempate determinístico por ID ascendente.
-- Validação de dados, contagens inteiras não negativas, saldo finito não negativo e IDs únicos.
-- Ranking completo no `cleo_redux.log` ao iniciar e consulta por Ctrl + G no jogo.
-- Testes automatizados do domínio, do adapter, da entrada real com APIs simuladas e do deploy PowerShell.
-
-**Os números são dados de demonstração em memória. Não representam nem modificam o save do GTA.**
-Os IDs são referências estáveis para futuros membros individuais, propriedades e relações;
-nesta fase, essas entidades ainda não existem. Vitórias e derrotas são apenas dados do cadastro.
-
-## Tecnologias e requisitos
-
-- GTA San Andreas clássico PC 1.0 US, CLEO 5 e CLEO Redux com suporte a TypeScript.
-- Ambiente de desenvolvimento inspecionado: Windows 11, CLEO 5.4.0 e CLEO Redux 1.5.1 x86.
-- Node.js 20.20 ou superior e npm, apenas para desenvolvimento e testes.
-- TypeScript 5.9, `tsx` 4, `@types/node` 20 e Git.
-- PowerShell para deploy. Os testes de deploy são omitidos com indicação explícita caso não exista
-  `powershell.exe` (Windows) ou `pwsh` (outros sistemas).
-
-O código que roda no GTA não depende de Node.js, `node_modules`, frameworks ou banco de dados.
-O CLEO Redux carrega e transpila o TypeScript diretamente; não há etapa de build obrigatória.
-As dependências estão somente em `devDependencies`, com versões resolvidas no `package-lock.json`.
-
-## Desenvolvimento
-
-No PowerShell, dentro do repositório:
+GTA SA 1.0 US, CLEO 5.4.0, CLEO Redux 1.5.1 x86, Windows 11 e PowerShell.
+Node 20.20+ e npm somente para ferramentas. ImGuiReduxWin32.cleo foi instalado
+apenas na copia DEV do GTA para a interface social; CLEO+ ainda nao e exigido.
+TypeScript ES2020, modulos .mts, sem Node no runtime GTA.
 
 ```powershell
 cd C:\dev\sa-gang-war-offline
 npm ci
 npm run typecheck
+npm run verify:cleo -- "C:\Games\GTA-SA-GangWar-DEV"
+# Suite existente da Fase 1 (nao cobre as novas funcionalidades):
 npm test
-# Ou executar tipos e testes juntos:
-npm run check
 ```
 
-O `tsconfig.json` verifica o runtime com ES2020 e sem tipos de Node ou DOM. `types/cleo.d.ts`
-contém somente os globais utilizados, conferidos nas definições instaladas em
-`CLEO\.config\sa.d.ts` (Sanny Builder Library v1.67).
-O `tsconfig.tests.json` habilita os tipos de Node exclusivamente para os testes.
+A Fase 1 foi integrada a main em 9300d40. Desenvolvimento em feat/gang-war-core-v0.2,
+sem commits/push/merge automaticos. Nao foram criados ou ampliados testes unitarios.
+O verificador de APIs confere comandos/parametros e imports contra CLEO/.config/sa.json,
+plugins instalados e manifesto. Isso nao substitui a execucao dentro da engine.
 
-## Deploy
+## Deploy e armazenamento
 
-Instale previamente o CLEO 5 e o CLEO Redux na instalação de desenvolvimento.
-Confira o caminho: o script exige que exista `<GamePath>\gta_sa.exe`.
+Faca deploy **com o jogo fechado**:
 
 ```powershell
-# Valida tipos e testes antes de copiar o mod para este caminho explícito:
 npm run deploy -- -GamePath "C:\Games\GTA-SA-GangWar-DEV"
 ```
 
-Alternativa direta, depois de executar `npm run check`:
+Ou, depois das verificacoes, apenas copie o mod:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy.ps1 -GamePath "C:\Games\GTA-SA-GangWar-DEV"
 ```
 
-O parâmetro tem como padrão `C:\Games\GTA-SA-GangWar-DEV`. Para outra instalação, forneça
-`-GamePath`. O deploy copia `index.ts` e todos os módulos `.mts` preservando o caminho relativo para:
+Destino: `<GamePath>\CLEO\GangWarOffline`. Copia fontes e mod.json, preserva imports e arquivos
+existentes. Nao copia testes/node_modules/Git, nao instala plugins nem altera executavel/saves.
+O manifesto pede apenas fs. Usa IniFile e Fs dos plugins **ja instalados**; nao muda cleo.ini.
+Em politica Strict, fs precisa estar permitido pelo usuario; o mod falha explicitamente se nao puder gravar.
 
-```text
-<GamePath>\CLEO\GangWarOffline\
-```
+O modo padrao e definido em `src/GangWarOffline/config/persistence.mts` como `memory`.
+Ele nao le, cria, altera ou recupera `world-a.ini`/`world-b.ini`; esses snapshots permanecem
+preservados para analise. Ao fechar/reabrir o GTA, as alteracoes de mundo, chat, score e K/D
+feitas no teste sao descartadas. Mude para `ini` somente depois de validar no GTA uma estrategia
+de gravacao que passe escrita, leitura e releitura do snapshot completo.
 
-O deploy falha com código 1 e uma mensagem se faltar o executável, o ponto de entrada ou ocorrer
-um erro de cópia. Copia somente fontes `.ts`/`.mts` de `src/GangWarOffline`, excluindo declarações
-`.d.ts`, `node_modules`, testes e Git. Substitui arquivos do mod com o mesmo nome; não remove
-arquivos existentes, outros mods, executável ou saves. Não instala plugins ou ASI loaders.
+Ao carregar um save ou iniciar novo jogo, a mensagem `Gang War Offline v0.2 ativo! Ctrl + G: ranking.`
+aparece quando o jogo entra em estado seguro. Em seguida, use os atalhos abaixo para testar os
+sistemas integrados sem persistencia.
 
-Os testes de deploy usam uma instalação temporária com executável fictício, verificam a cópia
-de todos os módulos e a preservação dos outros arquivos; nunca executam o GTA.
+## Menu DEV e ranking
 
-## Consultar o ranking dentro do GTA
+Atalhos centralizados em config/keyboard.mts; uma acao por pressionamento.
 
-1. Faça o deploy, abra o jogo e carregue um save ou inicie um novo jogo.
-2. Fora de uma missão, confirme a mensagem `Gang War Offline v0.1 carregado! Ctrl + G: ranking DEMO.`
-3. Segure **Ctrl** e pressione **G**. A primeira consulta apresenta o primeiro colocado.
-4. Cada novo pressionamento mostra a próxima gangue. Depois da quarta posição, volta à primeira.
-5. Grove Street recebe a identificação `[JOGADOR]`. O texto é marcado `DEMO`.
-6. Confira também `<GamePath>\cleo_redux.log`: a inicialização deve registrar `[GangWar]`,
-   `[validacao] OK: 4 gangues validadas`, `[ranking] OK` com os dados completos das quatro
-   gangues e `[atalho] OK: Ctrl + G registrado` antes da confirmação de sucesso.
+| Atalho | Acao |
+| --- | --- |
+| Ctrl + G | Abrir/fechar painel do ranking de gangues; fallback no chat |
+| Ctrl + M | Abrir/fechar painel visual do menu DEV |
+| Ctrl + Esquerda / Direita | Pagina anterior/proxima |
+| Ctrl + N | Proxima acao da pagina |
+| Ctrl + B | Proximo territorio/GZ/base-alvo |
+| Ctrl + L | Proximo slot de pickup/veiculo |
+| Ctrl + Cima / Baixo | Ajustar valor da acao |
+| Ctrl + Enter | Executar acao selecionada |
+| Ctrl + Esc | Interromper mod e remover entidades gerenciadas |
 
-O atalho fica centralizado em `src/GangWarOffline/config/keyboard.mts`: códigos das teclas
-e texto apresentado no jogo. Ctrl usa o código virtual 17 (`0x11`); G usa 71 (`0x47`),
-conferidos em `CLEO/.config/sa.enums.mts` da instalação CLEO Redux 1.5.1 e na
-[tabela de virtual keys do Windows](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes).
-Para alterar o atalho futuramente, ajuste `RANKING_SHORTCUT.keys` e `RANKING_SHORTCUT.label` nessa configuração.
+Paginas: Territorios, Gang Zones, Banco, Bases, Pickups, Respawn, Veiculos.
+Solte pelo menos uma tecla antes de repetir. O painel ImGuiRedux centraliza o menu em uma janela
+escura com pagina, alvo, acao, valor e slot visiveis ao mesmo tempo; a pagina selecionada fica
+destacada e os atalhos disponiveis aparecem no proprio painel. Ctrl+M funciona como abrir/fechar,
+Ctrl+Esquerda/Direita troca paginas sem usar ciclos acidentais, e Ctrl+B fica reservado aos alvos.
+Se o ImGuiRedux nao estiver disponivel, o menu usa o
+fallback de texto legado e mantem a mesma navegacao por atalhos.
+No chat (T), `/gangs [pagina]`, `/gang [TAG]`, `/top [pagina]`, `/stats` e `/help`
+fazem consultas locais sem publicar mensagens. O top 5 aparece uma vez por sessao
+quando o mundo estiver pronto. O modo DEV `memory` ainda nao grava em disco.
+Inspecionar registra os dados completos no cleo_redux.log. Em missoes, cutscenes, interiores
+ou fades, os efeitos do mundo sao suprimidos; o ranking tambem respeita ONMISSION.
+O chat, o TAB, o painel Ctrl+G e a mensagem de boas-vindas podem aparecer dentro
+de casa assim que o mundo estiver pronto; NPCs, capturas e menu DEV aguardam o exterior.
+Avisos do Gang War ficam centralizados no topo para nao cobrirem o chat; mensagens
+nativas do GTA permanecem inalteradas.
 
-O adapter consulta as teclas com `Pad.IsKeyPressed` a cada 50 ms usando `setInterval`.
-Só aciona quando **todas as teclas da combinação** estão pressionadas ao mesmo tempo.
-Ctrl sozinho ou G sozinho não acionam. Detecta a transição da combinação de solta para
-pressionada, sem repetir enquanto ambas estiverem seguradas. Para avançar, solte e pressione
-G novamente; pode manter Ctrl segurado. A ordem de pressionamento não importa, desde que
-as teclas fiquem pressionadas simultaneamente. Soltar Ctrl também libera um novo acionamento.
-Uma combinação já segurada ao carregar o script é ignorada até soltar pelo menos uma
-das teclas e pressioná-la novamente. Não há espera bloqueante no listener.
-O ranking só é recalculado na inicialização ou em um novo acionamento; o timer não registra logs.
-Cada posição usa uma caixa curta, sem depender de texto multilinha.
+Indices de gangue: 0=Grove, 1=Ballas, 2=Vagos, 3=Aztecas; transferencia de base aceita 4=livre.
+Comprar usa Grove; Comprar por gangue (DEV) permite testar outra gangue e debita o banco do comprador.
+Tipos de pickup: 0=vida, 1=colete, 2=Desert Eagle, 3=Tec-9, 4=Micro SMG,
+5=Sawn-off, 6=AK-47, 7=M4, 8=Sniper, 9=granadas.
+Veiculos: 0=Greenwood, 1=Savanna, 2=Sultan, 3=Rhino, 4=Hydra, 5=Hunter;
+modelos militares exigem base nivel 4.
 
-Durante missões (`ONMISSION`), a exibição inicial e Ctrl + G são suprimidas para preservar os textos
-da missão; a posição não avança. Depois da missão, solte e pressione a combinação novamente.
-O mod não altera `ONMISSION`, armas, controles, NPCs ou territórios originais.
-Se a consulta falhar, o timer é desativado e o erro é registrado uma única vez.
+## Calibracao e uso inicial
 
-### Checklist manual de aceite
+Coordenadas dos primeiros territorios usam GAN1, IWD4 e ELS4 de data/info.zon.
+El Corona e GZs aguardam calibracao; bases/spawns/garagens nao recebem pontos inventados.
 
-- Mensagem e ranking completo no log ao carregar o jogo.
-- Ordem/pontuação igual à tabela abaixo; Grove Street marcada como jogador.
-- Ctrl sozinho e G sozinho não abrem o ranking.
-- Segurar Ctrl + G não avança várias posições; manter Ctrl e soltar/pressionar G avança e circula após a quarta.
-- Recarregar o save reinicia o cadastro de demonstração e a navegação.
-- Nenhum texto do ranking durante uma missão.
-- Conferir se outro mod já usa Ctrl + G; conflitos entre mods exigem ajuste de `config/keyboard.mts`.
+1. Entre em Ganton/Idlewood e confira entrada/saida, blip e proprietario. Use Ctrl+G.
+2. Para editar territorio/GZ, selecione alvo, execute "Marcar canto A", caminhe ate o canto
+   oposto e execute "Marcar canto B e salvar". Cada eixo precisa ter 5 a 1000 metros.
+3. Na pagina Bases, selecione Base Grove, fique num local aberto e execute "Calibrar base aqui".
+   Marque um ponto de respawn a pe, parado e fora da agua. Execute Comprar perto da base.
+4. Em Pickups, selecione essa base, escolha tipo e execute Adicionar. Ctrl+L escolhe slot;
+   altere tipo/municao/cooldown/posicao ou remova-o. Aproximar-se concede o beneficio depois de salvar.
+5. Em Respawn, cadastre um ponto seguro na cidade correspondente (0=LS, 1=SF, 2=LV),
+   selecione a cidade ou uma base propria. Cadastre varios pontos para selecao aleatoria.
+6. Em Veiculos, calibre cada slot num espaco livre/pista, orientando CJ para a direcao desejada.
+   Afaste-se pelo menos 5 metros para permitir spawn. Pode configurar modelo, cor e reposicao.
+7. Entre numa zona inimiga e selecione Iniciar captura. A reserva de tropas e salva antes dos
+   NPCs aparecerem. Fique na area com aliados, enfrente defensores e aguarde resultado/historico.
+8. Base da Fabrica, SF, LV e Area 51 seguem o mesmo fluxo de calibracao. Area 51 nao tem disputa semanal.
 
-Essas verificações visuais e de convivência com os mods instalados exigem teste manual no GTA.
-Testes com API simulada não confirmam renderização, foco, pausas, cutscenes ou compatibilidade
-com cada instalação. Toques mais rápidos que a amostragem de 50 ms podem não ser detectados.
+Nao confunda transferencia DEV com vitoria de captura. O banco usa carteira do mod, nao dinheiro CJ.
+Catalogo/configuracoes ficam em config/world.mts. IDs novos de zonas/bases sao acrescentados ao
+estado existente; edicoes de IDs existentes nao apagam a personalizacao persistida.
 
-## Regras de pontuação
+## Validacao manual obrigatoria
 
-Pesos centralizados em `src/GangWarOffline/config/scoring.mts`:
+- Primeiro load em memoria: [persistencia] Modo memoria, [validacao] OK, [ranking] OK e [atalho] OK no log.
+- Ctrl+G segurado nao repete; menu permite calibrar, consultar e modificar somente os alvos previstos.
+- Territorio muda de cor/proprietario e pontua no ranking; completar uma disputa troca a propriedade.
+- 3v3 e reforcos respeitam maximo 8 NPCs; mortes afetam captura; sair para missao interrompe combate.
+- Banco: comparar saldo/carteira antes/depois de deposito, saque, compra e recarregamento.
+- GZ calibrada: repetir disputa e verificar pontuacao propria e historico.
+- Pickup proprio concede vida/colete/arma; rival nao concede; segurar sobre o icone respeita cooldown.
+- Morte fora de missao usa cidade/base propria; perda da base selecionada usa fallback; nunca move CJ vivo.
+- Garagem: uma unidade por slot, portas rivais, destruicao e reposicao; military somente nivel 4.
+- Fechar e reabrir o jogo: confirmar que o estado volta ao cadastro inicial; isso e esperado no modo memoria.
+- Persistencia/recovery de snapshots nao fazem parte do aceite deste modo enquanto o IniFiles nao for corrigido.
+- Ctrl+Esc encerra entidades. Evite hot reload e salvar o GTA enquanto ha entidades do mod ativas.
 
-| Recurso | Pontos |
-| --- | ---: |
-| Território | 100 por unidade |
-| Gang Zone (GZ) | 250 por unidade |
-| Base | 500 por unidade |
-| Banco | 10 por $10.000 completos, limitado a 300 |
+## Limites e compatibilidade
 
-Fórmula: `territórios * 100 + GZs * 250 + bases * 500 + min(floor(banco / 10000) * 10, 300)`.
-Vitórias, derrotas, membros, agressividade e habilidade não pontuam nesta versão.
-Em empate, vence o ID em ordem alfabética ASCII crescente, independentemente da ordem de cadastro.
-As posições são sequenciais (1, 2, 3...) mesmo em empate. O ranking copia as gangues e não modifica
-o array nem os objetos de entrada. IDs duplicados e pontuação acima da precisão segura são rejeitados.
+Marcadores coloridos sao reais; retangulos preenchidos de gang zones no radar nao estao disponiveis
+nas APIs verificadas sem extensoes novas e permanecem uma limitacao. Pickups usam objetos giratorios
+com coleta controlada, para impor permissao/cooldown em vez de grants automaticos da engine.
+Colisao/altura, INI, modelos, tiros e override de respawn exigem aceite no GTA; checagem de tipos nao basta.
+Nao foi usado comando marcado unsupported, SA-MP ou CLEO+; nenhum plugin novo foi instalado.
 
-Os dados centralizados em `config/gangs.mts` produzem:
+No maximo 8 NPCs em combate ou 2 guardas; 24 icones e 12 veiculos ativos. Streaming a 180 m,
+mundo a 250 ms, teclado/IO a 50 ms. Reservas duraveis podem adiar um beneficio se houver interrupcao;
+priorizamos nao duplicar recursos. Handles nao sao persistidos. Hot reload em combate nao foi validado.
 
-| Posição | Gangue | Pontos |
-| ---: | --- | ---: |
-| 1 | Ballas | 2110 |
-| 2 | Los Santos Vagos | 1950 |
-| 3 | Grove Street Families (jogador) | 1580 |
-| 4 | Varrios Los Aztecas | 970 |
+Mantida a validacao pura de createdAt, sem Date.parse/new Date/toISOString. O diagnostico [compat-data]
+continua no log. Date.now numerico passa por verificacao em runtime; falhar bloqueia o mundo offline.
+As Fases 11 a 15, IA avancada e eventos semanais estao fora desta entrega.
 
-`createInitialGangs()` retorna cópias independentes da configuração congelada.
-`calculateGangScore(gang, config)`, `rankGangs(gangs, config)` e `getGangById(gangs, id)`
-podem ser usados fora do GTA. A busca retorna `undefined` quando o ID não existe.
-`createdAt` é a data ISO UTC fixa do registro da configuração v0.1, não a data do save.
-Seu contrato é `YYYY-MM-DDTHH:mm:ss.sssZ` (24 caracteres). A validação pura em `core/dates.mts`
-confere formato, calendário gregoriano (incluindo anos bissextos) e limites de hora/minuto/segundo.
-Não usa `Date.parse`, `new Date` ou `toISOString` para decidir se uma gangue é válida.
-Rejeita datas impossíveis, offsets, espaços, segundos 60 e hora 24; o campo continua sendo string UTC.
-
-## Diagnóstico de compatibilidade de datas no CLEO
-
-A instalação CLEO Redux 1.5.1 registrou a rejeição de Grove Street durante `createInitialGangs()`.
-O valor confirmado no repositório e no mod instalado é `2026-10-08T00:00:00.000Z` para as quatro
-gangues: uma data válida no formato exigido. A validação antiga exigia regex, `Date.parse` finito
-e igualdade entre `new Date(value).toISOString()` e a string original. O log antigo reunia essas
-verificações numa mesma mensagem e não identificava qual delas falhou. Os testes Node passaram,
-mas não mediram o resultado individual das APIs de Date no CLEO.
-
-A correção preserva o contrato e valida explicitamente o calendário, eliminando a dependência
-de parsing/normalização nativos de Date. Não há conversão de formato, troca de data, polyfill ou
-relaxamento da validação. A divergência exata das APIs do runtime deve ser confirmada com o diagnóstico abaixo.
-
-`adapters/diagnostics.mts` é importado pela entrada e executado automaticamente **uma vez ao
-carregar o mod dentro do CLEO**, sem ação adicional, gravação de arquivos ou timer próprio.
-Após novo deploy e carregamento do save, procure a linha `[GangWar] [compat-data]` no log:
-
-- `value`, `valueType` e `valueLength`: string exata, seu tipo e comprimento.
-- `legacyRegexMatches`: resultado da expressão regular original, avaliada separadamente.
-- `canonicalFormat` e `calendarValid`: resultado do formato e da validação de calendário.
-- `calendarSelfTestPasses` e `calendarSelfTestFailures`: teste executado no runtime para a data
-  do cadastro, anos bissextos, fevereiro impossível e hora 24; esperado `true` e lista vazia.
-- `dateParse`, `dateParseType`, `dateParseFinite` ou `dateParseError`: resultado de `Date.parse`.
-- `constructedTime`, `toISOString`, `roundTripMatches` ou `dateRoundTripError`: resultado separado
-  da construção/normalização da data.
-- `legacyValidationPasses`: se a validação antiga passaria nesse runtime.
-
-Se `calendarValid` for `true` e `legacyValidationPasses` for `false`, confira `legacyRegexMatches`
-e os resultados de Date para identificar qual etapa divergiu. Exceções dessas APIs são capturadas
-e registradas sem bloquear o cadastro.
-Se ambos forem `true`, o problema antigo não foi reproduzido nesse carregamento: confira os
-arquivos efetivamente instalados e a sessão/horário do log antes de atribuir a falha a uma API.
-
-Erros de inicialização agora incluem a etapa: `ERRO [validacao]`, `ERRO [ranking]`,
-`ERRO [apresentacao]` ou `ERRO [atalho]`. Uma data inválida também informa seu valor na mensagem.
-Erros posteriores de consulta usam `ERRO [consulta-ranking]` e encerram o timer para evitar repetições.
-Falhar na validação não deve produzir a confirmação de registro do atalho ou de inicialização completa.
-
-Os testes de regressão simulam Date incompatível no domínio, no adapter e no `index.ts` real
-carregado em Node com globais CLEO simulados. Confirmam quatro gangues, ranking, registro das
-teclas 17/71 e um único acionamento de Ctrl + G mesmo mantendo o atalho pressionado.
-Esses testes **não substituem o aceite dentro do GTA**: confirme o diagnóstico, as três etapas OK,
-a mensagem inicial e a navegação pelas quatro posições no jogo.
-
-## Estrutura
-
-```text
-src/GangWarOffline/
-  index.ts
-  core/
-    dates.mts
-    types.mts
-    gangs.mts
-    ranking.mts
-  config/
-    gangs.mts
-    keyboard.mts
-    scoring.mts
-  adapters/
-    diagnostics.mts
-    gta.mts
-types/cleo.d.ts
-tests/
-  dates.test.ts
-  gangs.test.ts
-  ranking.test.ts
-  gta.test.ts
-  entry.test.ts
-  deploy.test.ts
-scripts/deploy.ps1
-package.json
-package-lock.json
-tsconfig.json
-tsconfig.tests.json
-.gitignore
-README.md
-```
-
-A integração global com CLEO fica no `index.ts`; `adapters/gta.mts` controla a apresentação e
-recebe uma API injetável. O core depende apenas das configurações do próprio mod.
-Os módulos auxiliares usam `.mts` com imports relativos explícitos, suportados pelo CLEO Redux,
-para não serem executados como scripts independentes. O único ponto de entrada é `index.ts`.
-
-Referências verificadas:
-
-- [TypeScript e configuração](https://re.cleo.li/docs/en/typescript.html)
-- [Imports, incluindo módulos .mts](https://re.cleo.li/docs/en/imports.html)
-- [Diretórios com index.ts e ciclo de vida](https://re.cleo.li/docs/en/script-lifecycle.html)
-- [API: HOST, ONMISSION, log, showTextBox e timers](https://re.cleo.li/docs/en/api.html)
-- [Programação assíncrona e timers](https://re.cleo.li/docs/en/async.html)
-- [Exemplo oficial com Pad.IsKeyPressed](https://github.com/cleolibrary/CLEO-Redux)
-
-## Limitações e próximas fases
-
-A v0.1 mantém somente dados de demonstração durante a sessão. Reiniciar o script, carregar
-outro save ou reabrir o jogo reinicializa esses dados. Não há persistência, sincronização com
-save, conquistas, NPCs, economia real, combates, IA ou simulação offline. Cores e estatísticas
-estão no modelo, mas não há HUD própria ou marcação de áreas do mapa.
-
-Planejado para futuras fases:
-
-- Conquista e defesa de territórios, GZs e bases.
-- Economia, bancos e disputa semanal da Área 51.
-- Bots avançados de combate e IA estratégica para aproximadamente 20 gangues.
-- Mundo persistente offline, simulação entre sessões e relações entre gangues.
-- Conversas e vozes com IA.
+Detalhes essenciais: [Roadmap](docs/ROADMAP.md), [Arquitetura](docs/ARCHITECTURE.md),
+[Regras](docs/GAME_RULES.md). Referencias: [CLEO Redux](https://re.cleo.li/docs/en/),
+[permissao fs](https://re.cleo.li/docs/en/permissions.html), [Sanny Builder Library](https://library.sannybuilder.com/).

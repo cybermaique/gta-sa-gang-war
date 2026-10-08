@@ -69,7 +69,7 @@ test("deploy rejeita instalação sem gta_sa.exe antes de copiar arquivos", { sk
   withFixture((_root, game, script) => {
     const result = deploy(script, game);
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /gta_sa.exe ausente/);
+    assert.match(result.stderr, /gta_sa\.exe\s+ausente/);
     assert.deepEqual(readdirSync(game), []);
   });
 });

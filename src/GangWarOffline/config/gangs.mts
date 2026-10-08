@@ -7,6 +7,7 @@ const CREATED_AT = "2026-10-08T00:00:00.000Z";
 export const INITIAL_GANGS: readonly Readonly<Gang>[] = Object.freeze([
   Object.freeze({
     id: "grove-street",
+    tag: "[GSF]",
     name: "Grove Street Families",
     color: "#228B22" as const,
     members: 24,
@@ -23,6 +24,7 @@ export const INITIAL_GANGS: readonly Readonly<Gang>[] = Object.freeze([
   }),
   Object.freeze({
     id: "ballas",
+    tag: "[BLS]",
     name: "Ballas",
     color: "#800080" as const,
     members: 32,
@@ -39,6 +41,7 @@ export const INITIAL_GANGS: readonly Readonly<Gang>[] = Object.freeze([
   }),
   Object.freeze({
     id: "los-vagos",
+    tag: "[VGS]",
     name: "Los Santos Vagos",
     color: "#FFD700" as const,
     members: 28,
@@ -55,6 +58,7 @@ export const INITIAL_GANGS: readonly Readonly<Gang>[] = Object.freeze([
   }),
   Object.freeze({
     id: "aztecas",
+    tag: "[AZT]",
     name: "Varrios Los Aztecas",
     color: "#00BFFF" as const,
     members: 16,

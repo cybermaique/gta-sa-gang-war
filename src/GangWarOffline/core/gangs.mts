@@ -7,6 +7,9 @@ const COUNT_FIELDS = [
 ] as const;
 
 export function validateGang(gang: Readonly<Gang>): void {
+  if (gang.tag !== undefined && (typeof gang.tag !== "string" || !/^\[[A-Z0-9]{1,5}\]$/.test(gang.tag))) {
+    throw new TypeError(`Gang ${gang.id}: tag invalida; use [ABC], de 1 a 5 letras/ digitos.`);
+  }
   if (typeof gang.id !== "string" || !/^[a-z][a-z0-9-]*$/.test(gang.id)) {
     throw new TypeError("Gang id deve ser um identificador estável em kebab-case.");
   }

@@ -6,3 +6,4 @@ build/
 *.bak
 .env
 .env.*
+backups/

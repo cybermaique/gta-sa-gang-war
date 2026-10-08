@@ -36,6 +36,7 @@ export function reportGtaError(runtime: GtaRuntime, error: unknown, stage = "exe
 export function startGangWar(
   runtime: GtaRuntime,
   getGangs?: () => readonly Readonly<Gang>[],
+  options: { version?: string; demo?: boolean; showInitialMessage?: boolean; onShortcut?: () => void } = {},
 ): () => void {
   if (runtime.host !== "sa") {
     runtime.log(`[GangWar] Host não suportado: ${runtime.host}. Esperado: sa.`);
@@ -43,6 +44,8 @@ export function startGangWar(
   }
 
   let stage: InitializationStage = "validacao";
+  const version = options.version ?? "0.1";
+  const mode = options.demo === false ? "MUNDO" : "DEMO";
   let timerId: number | undefined;
   let stopped = false;
   try {
@@ -53,12 +56,12 @@ export function startGangWar(
     runtime.log(`[GangWar] [validacao] OK: ${initialGangs.length} gangues validadas.`);
 
     stage = "ranking";
-    runtime.log("[GangWar] [ranking] Calculando ranking inicial DEMO.");
+    runtime.log(`[GangWar] [ranking] Calculando ranking inicial ${mode}.`);
     const initialRanking = rankGangs(initialGangs, DEFAULT_SCORING);
-    runtime.log(`[GangWar] [ranking] OK: Ranking inicial completo (DEMO): ${JSON.stringify(initialRanking)}`);
+    runtime.log(`[GangWar] [ranking] OK: Ranking inicial completo (${mode}): ${JSON.stringify(initialRanking)}`);
     stage = "apresentacao";
-    if (!runtime.isOnMission()) {
-      runtime.showTextBox(`Gang War Offline v0.1 carregado! ${RANKING_SHORTCUT.label}: ranking DEMO.`);
+    if (options.showInitialMessage !== false && !runtime.isOnMission()) {
+      runtime.showTextBox(`Gang War Offline v${version} carregado! ${RANKING_SHORTCUT.label}: ranking ${mode}.`);
     }
 
     stage = "atalho";
@@ -74,10 +77,11 @@ export function startGangWar(
         const justPressed = pressed && !wasPressed;
         wasPressed = pressed;
         if (!justPressed || runtime.isOnMission()) return;
+        if (options.onShortcut) { options.onShortcut(); return; }
 
         const ranking = rankGangs(currentGangs(), DEFAULT_SCORING);
         if (ranking.length === 0) {
-          runtime.showTextBox("Gang War DEMO: nenhuma gangue cadastrada.");
+          runtime.showTextBox(`Gang War ${mode}: nenhuma gangue cadastrada.`);
           nextPosition = 0;
           return;
         }
@@ -85,7 +89,7 @@ export function startGangWar(
         const entry = ranking[index]!;
         const player = entry.gang.isPlayerGang ? " [JOGADOR]" : "";
         runtime.showTextBox(
-          `DEMO ${entry.position}/${ranking.length}: ${entry.gang.name}${player} - ${entry.score} pts. ${RANKING_SHORTCUT.label}: proxima.`,
+          `${mode} ${entry.position}/${ranking.length}: ${entry.gang.name}${player} - ${entry.score} pts. ${RANKING_SHORTCUT.label}: proxima.`,
         );
         nextPosition = (index + 1) % ranking.length;
       } catch (error) {
@@ -98,7 +102,7 @@ export function startGangWar(
     }, POLL_INTERVAL_MS);
 
     runtime.log(`[GangWar] [atalho] OK: ${RANKING_SHORTCUT.label} registrado; consulta a cada ${POLL_INTERVAL_MS} ms.`);
-    runtime.log("[GangWar] Mod iniciado com sucesso! Gang War Offline v0.1 (DEMO).");
+    runtime.log(`[GangWar] Mod iniciado com sucesso! Gang War Offline v${version} (${mode}).`);
 
     return () => {
       if (!stopped) {

@@ -1,0 +1,6 @@
+{
+  "name": "GangWar",
+  "version": "0.2.0",
+  "entries": ["index.ts"],
+  "permissions": ["fs"]
+}
