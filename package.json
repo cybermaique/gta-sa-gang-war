@@ -1,0 +1,21 @@
+{
+  "name": "sa-gang-war-offline",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Gang System v0.1 para GTA San Andreas com CLEO Redux",
+  "scripts": {
+    "typecheck": "tsc --project tsconfig.json && tsc --project tsconfig.tests.json",
+    "test": "tsx --test tests/dates.test.ts tests/gangs.test.ts tests/ranking.test.ts tests/gta.test.ts tests/entry.test.ts tests/deploy.test.ts",
+    "check": "npm run typecheck && npm test",
+    "deploy": "npm run check && powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/deploy.ps1"
+  },
+  "engines": {
+    "node": ">=20.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
